@@ -120,32 +120,58 @@ public class Archivo {
 
     public void iniciarArchivoTicket() throws FileNotFoundException, IOException {
 
-        this.setNumeroPnr(dividirPorEspacio(getDatoPunto("MUC", 0, 0), 1).substring(0, 6));
+        try {
+            this.setNumeroPnr(dividirPorEspacio(getDatoPunto("MUC", 0, 0), 1).substring(0, 6));
+        } catch (Exception e) {
+            this.setNumeroPnr("");
+        }
+
         this.setFechaEmision(getDatoPunto("D-", 2, 0));
         this.setNumero_file(getNumFile());
 
-        /*****************TARIFA***********************
-         * - La tarifa viene en la linea K- , en caso de no venir se reccure a la linea KN-
-         * - Los Tax de extraen con el metodo getPrecioNeto() en caso de no venir nada en ela linea K- se 
-         *   sacan de la KNT
+        /**
+         * ***************TARIFA*********************** - La tarifa viene en la
+         * linea K- , en caso de no venir se reccure a la linea KN- - Los Tax de
+         * extraen con el metodo getPrecioNeto() en caso de no venir nada en ela
+         * linea K- se sacan de la KNT
          */
-        
-        if (!getDatoPunto("K-",0,0).equals("")) {
-            setMoneda(getDatoPunto("K-",12,0).substring(0, 3));
-            setValor_final(Double.parseDouble(getDatoPunto("K-",12,0).substring(3).trim()));
-            setValor_neto(getPrecioNeto());
-            cargaTasas();
-        }else{
-            if (existeLinea("KN-")) {
-               setMoneda(getDatoPunto("KN-",12,0).substring(0, 3));
-                setValor_final(Double.parseDouble(getDatoPunto("KN-",12,0).substring(3).trim()));
-                setValor_neto(getPrecioNetoKN());
-                cargaTasasKNT(); 
-            }      
-        }
-        
-        /***********************************************/
+        if (!getDatoPunto("K-", 0, 0).equals("")) {
+            String moneda = getDatoPunto("K-", 12, 0).substring(0, 3);
+            double tipoCambio = buscarTipoCambioK();
+            if (moneda.equals("CLP") && tipoCambio > 0) {
+                    setMoneda(moneda);
+                    setValor_final(Double.parseDouble(getDatoPunto("K-", 12, 0).substring(3).trim()));
+                    setValor_neto(getPrecioNeto()*tipoCambio);
+                    cargaTasas();
+                } else {
+                    setMoneda(getDatoPunto("K-", 0, 0).substring(1, 4));
+                    setValor_neto(getPrecioNeto());
+                    cargaTasas();
+                    setValor_final(getValor_neto()+getValor_tasas());
+                }
 
+        } else {
+            if (existeLinea("KN-")) {
+                String moneda = getDatoPunto("KN-", 12, 0).substring(0, 3);
+                double tipoCambio = buscarTipoCambioKN();
+                if (moneda.equals("CLP") && tipoCambio > 0) {
+                    setMoneda(moneda);
+                    setValor_final(Double.parseDouble(getDatoPunto("KN-", 12, 0).substring(3).trim()));
+                    setValor_neto(getPrecioNetoKN()*tipoCambio);
+                    cargaTasasKNT();
+                } else {
+                    setMoneda(getDatoPunto("KN-", 0, 0).substring(1, 4));
+                    setValor_neto(getPrecioNetoKN());
+                    cargaTasasKNT();
+                    setValor_final(getValor_neto()+getValor_tasas());
+                }
+
+            }
+        }
+
+        /**
+         * ********************************************
+         */
         /**
          * ********************************************
          */
@@ -367,48 +393,6 @@ public class Archivo {
         }
         this.setValor_tasas(valor);
     }
-    
-    private void cargaTasas(double tipoDeCambio) throws FileNotFoundException, IOException {
-        //BufferedReader bf = new BufferedReader(new FileReader(archivo));
-        double valor = 0;
-        for (String cadena : bf) {
-            if (!cadena.equals("") && cadena.length() > 3) {
-                if (cadena.substring(0, 3).equals("KFT")) {
-                    String cadena_final = cadena.substring(4);
-                    String[] split = cadena_final.split(";");
-                    for (String string : split) {
-                        String[] valores_string = string.trim().split(" ");
-                        if (valores_string[0].length() > 0) {
-                            double valor_aux = Double.parseDouble(valores_string[0].substring(getPosicionNumero(valores_string[0])));
-                            valor += valor_aux;
-                        }
-                    }
-                }
-            }
-        }
-        this.setValor_tasas(valor/tipoDeCambio);
-    }
-
-    private void cargaTasasKNT(double tipoDeCambio) throws FileNotFoundException, IOException {
-        //BufferedReader bf = new BufferedReader(new FileReader(archivo));
-        double valor = 0;
-        for (String cadena : bf) {
-            if (!cadena.equals("") && cadena.length() > 3) {
-                if (cadena.substring(0, 3).equals("KNT")) {
-                    String cadena_final = cadena.substring(4);
-                    String[] split = cadena_final.split(";");
-                    for (String string : split) {
-                        String[] valores_string = string.trim().split(" ");
-                        if (valores_string[0].length() > 0) {
-                            double valor_aux = Double.parseDouble(valores_string[0].substring(getPosicionNumero(valores_string[0])));
-                            valor += valor_aux;
-                        }
-                    }
-                }
-            }
-        }
-        this.setValor_tasas(valor / tipoDeCambio);
-    }
 
     private void cargaTasasKNT() throws FileNotFoundException, IOException {
         //BufferedReader bf = new BufferedReader(new FileReader(archivo));
@@ -450,7 +434,7 @@ public class Archivo {
         int largo = incidencia.length();
         //LARGO 7
         for (String cadena : bf) {
-            if (!cadena.equals("") && cadena.length() > largo) {
+            if (!cadena.equals("") && cadena.length() > largo && !incidencia.equals("")) {
                 //System.out.println(incidencia+" - "+cadena.substring(0,largo));
                 if (cadena.substring(0, largo).equals(incidencia)) {
                     String cadena_final = cadena.substring(largo).trim();
@@ -631,7 +615,7 @@ public class Archivo {
 
     public static void main(String[] args) {
         try {
-            Archivo lc = new Archivo(new File("C:\\Users\\Felipe\\Desktop\\pruebas\\lectura\\@1300013.NOV"));
+            Archivo lc = new Archivo(new File("C:\\Users\\Alberto\\Desktop\\Pruebas\\lectura\\@0100009.APR"));
             System.out.println(lc);
             ArchivoDAO a = new ArchivoDAO();
             try {
@@ -644,6 +628,26 @@ public class Archivo {
         } catch (IOException ex) {
             Logger.getLogger(Archivo.class.getName()).log(Level.SEVERE, null, ex);
         }
+    }
+
+    private double buscarTipoCambioKN() throws IOException {
+
+        if (getDatoPunto("KN-", 13, 0).equals("")) {
+            return 0;
+        }
+
+        return Double.parseDouble(getDatoPunto("KN-", 13, 0));
+
+    }
+    
+    private double buscarTipoCambioK() throws IOException {
+
+        if (getDatoPunto("K-", 13, 0).equals("")) {
+            return 0;
+        }
+
+        return Double.parseDouble(getDatoPunto("K-", 13, 0));
+
     }
 
 }
