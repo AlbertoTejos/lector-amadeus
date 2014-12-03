@@ -124,72 +124,27 @@ public class Archivo {
         this.setFechaEmision(getDatoPunto("D-", 2, 0));
         this.setNumero_file(getNumFile());
 
-        /**
-         * ***************TARIFA*********************** - La tarifa viene en la
-         * linea K- , en caso de no venir se reccure a la linea KN- - Los Tax de
-         * extraen con el metodo getPrecioNeto() en caso de no venir nada en ela
-         * linea K- se sacan de la KNT
+        /*****************TARIFA***********************
+         * - La tarifa viene en la linea K- , en caso de no venir se reccure a la linea KN-
+         * - Los Tax de extraen con el metodo getPrecioNeto() en caso de no venir nada en ela linea K- se 
+         *   sacan de la KNT
          */
-        if (!getDatoPunto("K-", 0, 0).equals("")) {
-
-            double tipoDeCambio = 0;
-            
-            if(getDatoPunto("K-", 13, 0).length() > 0){
-                tipoDeCambio = Double.parseDouble(getDatoPunto("K-", 13, 0).trim());
-            }
-            
-            setMoneda(getDatoPunto("K-", 0, 0).substring(1, 4));
-            if (getMoneda().equals("USD")) {
-                if(tipoDeCambio > 0){
-                    setValor_final(Double.parseDouble(getDatoPunto("K-", 12, 0).substring(3).trim())/tipoDeCambio);
-                    cargaTasas(tipoDeCambio);
-                }
-                
-                setValor_neto(getPrecioNeto()); 
-            }else{
-                setValor_final(Double.parseDouble(getDatoPunto("K-", 12, 0).substring(3).trim()));
-                if(tipoDeCambio > 0){
-                    setValor_neto(getPrecioNeto()*tipoDeCambio);
-                }else{
-                    setValor_neto(getPrecioNeto());
-                }
-                cargaTasas();
-            }
-        } else {
+        
+        if (!getDatoPunto("K-",0,0).equals("")) {
+            setMoneda(getDatoPunto("K-",12,0).substring(0, 3));
+            setValor_final(Double.parseDouble(getDatoPunto("K-",12,0).substring(3).trim()));
+            setValor_neto(getPrecioNeto());
+            cargaTasas();
+        }else{
             if (existeLinea("KN-")) {
-                double tipoDeCambio = 0;
-            
-                if(getDatoPunto("KN-", 13, 0).length() > 0){
-                tipoDeCambio = Double.parseDouble(getDatoPunto("KN-", 13, 0).trim());
-                }
-                
-                setMoneda(getDatoPunto("KN-", 0, 0).substring(1, 4));
-                
-                if (getMoneda().equals("USD")) {
-                    if (tipoDeCambio > 0) {
-                        setValor_final(Double.parseDouble(getDatoPunto("KN-", 12, 0).substring(3).trim()) / tipoDeCambio);
-                        cargaTasasKNT(tipoDeCambio);
-                    }else{
-                        setValor_final(Double.parseDouble(getDatoPunto("KN-", 12, 0).substring(3).trim()));
-                        cargaTasasKNT();
-                    }
-                    
-                    setValor_neto(getPrecioNetoKN());
-
-                } else {
-                    setValor_final(Double.parseDouble(getDatoPunto("KN-", 12, 0).substring(3).trim()));
-                    
-                    if (tipoDeCambio > 0) {
-                        setValor_neto(getPrecioNetoKN()*tipoDeCambio);
-                    }else{
-                        setValor_neto(getPrecioNetoKN());
-                    }
-                    cargaTasasKNT();
-                    
-                }
-
-            }
+               setMoneda(getDatoPunto("KN-",12,0).substring(0, 3));
+                setValor_final(Double.parseDouble(getDatoPunto("KN-",12,0).substring(3).trim()));
+                setValor_neto(getPrecioNetoKN());
+                cargaTasasKNT(); 
+            }      
         }
+        
+        /***********************************************/
 
         /**
          * ********************************************
