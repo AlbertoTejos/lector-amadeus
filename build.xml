@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="Lector_TKT" default="default" basedir=".">
+    <description>Builds, tests, and runs the project </description>
+    <import file="nbproject/build-impl.xml"/>
+    <target name="Lector TKT" depends="jar">  
+     <!-- Cambien el valor de esta propiedad para dar el nombre al JAR,  
+        sin la extensión .jar. No debe tener espacios.  
+        <property name="store.jar.name" value="NombreDelJar"/>  
+     -->  
+     <property name="store.jar.name" value="Lector TKT"/>  
+     <!-- No editar nada después de esta línea -->  
+     <property name="store.dir" value="store"/>  
+     <property name="store.jar" value="${store.dir}/${store.jar.name}.jar"/>  
+     <echo message="Packaging ${application.title} into a single JAR at ${store.jar}"/>  
+     <!--<delete dir="${store.dir}"/> --> 
+     <mkdir dir="${store.dir}"/>  
+     <jar destfile="${store.dir}/temp_final.jar" filesetmanifest="skip">  
+       <zipgroupfileset dir="dist" includes="*.jar"/>  
+       <zipgroupfileset dir="dist/lib" includes="*.jar"/>  
+       <manifest>  
+         <attribute name="Main-Class" value="${main.class}"/>  
+       </manifest>  
+     </jar>  
+     <zip destfile="${store.jar}">  
+       <zipfileset src="${store.dir}/temp_final.jar"  
+       excludes="META-INF/*.SF, META-INF/*.DSA, META-INF/*.RSA"/>  
+     </zip>  
+     <delete file="${store.dir}/temp_final.jar"/>  
+   </target>
+</project>
+

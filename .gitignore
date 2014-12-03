@@ -1,0 +1,22 @@
+$ cat .gitignore	
+
+# Specific Files #
+parametros.conf
+log/*
+
+# Class Files #
+*.class
+
+# Package Files #
+*.jar
+*.war
+*.ear
+
+# NetBeans #
+nbproject/private/
+build/
+nbbuild/
+dist/
+nbdist/
+nbactions.xml
+nb-configuration.xml
